@@ -9,6 +9,7 @@ hdata1 <- hdata %>% select(SEF28_medHHInc, HB10_RxAbuse, HO18_LifeExpect)
 cor(hdata1)
 
 fit <- lm(HO18_LifeExpect ~ SEF28_medHHInc + HB10_RxAbuse, data = hdata1)
+summary(fit)
 Xmat<-model.matrix(fit)
 XtX<-t(Xmat)%*%Xmat
 sig2hat<-summary(fit)$sigma^2
@@ -17,7 +18,7 @@ p<- ncol(Xmat)-1
 library(rjags)
 
 
-# Model 1 : Mixed g's prior -----------------------------------------------
+# Model 1 : Mixture of g Priors -----------------------------------------------
 
 
 cat('
@@ -54,7 +55,7 @@ inits <- list(list(tausq=1, alpha = 1, beta=rnorm(p) ),
               list(tausq=1, alpha=0, beta=rnorm(p,sd=.5) )
 )
 
-m <- jags.model(final.proj.model1, d, inits, n.chains=3)
+m <- jags.model(final.proj.model1, d, inits, n.chains=3, n.adapt =0)
 
 ### Make a preliminary run of 1000 iterations, with monitoring
 
@@ -64,7 +65,8 @@ x <- coda.samples(m, c("alpha","beta","sigma2",'ginv'), n.iter=1000)
 ### Assess convergence
 
 gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
-
+gelman.plot(x, autoburnin=FALSE)
+plot(x)
 
 ### Run 10000 more iterations
 
@@ -73,6 +75,8 @@ x <- coda.samples(m, c("alpha","beta","sigma2",'ginv'), n.iter=10000)
 ### Assess convergence
 
 gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
+gelman.plot(x, autoburnin=FALSE)
+plot(x)
 
 ### Check stats after burn-in
 
@@ -83,7 +87,7 @@ summary(x)
 update(m, 1000)
 dic.samples(m, 10000, type="pD")
 
-# Model 2: No g  ----------------------------------------------------------
+# Model 2: Unit Information Prior (No g)  ----------------------------------------------------------
 
 cat('
 data {
@@ -118,25 +122,27 @@ inits <- list(list(tausq=1, alpha = 1, beta=rnorm(p) ),
               list(tausq=1, alpha=0, beta=rnorm(p,sd=.5) )
 )
 
-m <- jags.model(final.proj.model1, d, inits, n.chains=3)
+m <- jags.model(final.proj.model1, d, inits, n.chains=3, n.adapt=0)
 
 ### Make a preliminary run of 1000 iterations, with monitoring
 
 x <- coda.samples(m, c("alpha","beta","sigma2"), n.iter=1000)
 
+### Assess convergence
+
+gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
+gelman.plot(x, autoburnin=FALSE)
+plot(x)
+
+### Run 1000 more iterations
+
+x <- coda.samples(m, c("alpha","beta","sigma2"), n.iter=1000)
 
 ### Assess convergence
 
 gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
-
-
-### Run 10000 more iterations
-
-x <- coda.samples(m, c("alpha","beta","sigma2"), n.iter=10000)
-
-### Assess convergence
-
-gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
+gelman.plot(x, autoburnin=FALSE)
+plot(x)
 
 ### Check stats after burn-in
 
@@ -146,4 +152,11 @@ summary(x)
 
 update(m, 1000)
 dic.samples(m, 10000, type="pD")
+
+
+
+
+
+
+
 
