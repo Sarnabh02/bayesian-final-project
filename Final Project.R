@@ -137,16 +137,6 @@ gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
 gelman.plot(x, autoburnin=FALSE)
 plot(x)
 
-### Run 1000 more iterations
-
-x <- coda.samples(m, c("alpha","beta","sigma2"), n.iter=1000)
-
-### Assess convergence
-
-gelman.diag(x, autoburnin=FALSE, multivariate=FALSE)
-gelman.plot(x, autoburnin=FALSE)
-plot(x)
-
 ### Check stats after burn-in
 
 summary(x)
