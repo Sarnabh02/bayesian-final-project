@@ -89,6 +89,9 @@ dic.samples(m, 10000, type="pD")
 
 # Model 2: Unit Information Prior (No g)  ----------------------------------------------------------
 
+XtXdn<-t(Xmat)%*%Xmat/nrow(Xmat)
+bhat <- fit$coefficients
+
 cat('
 data {
   dim.X <- dim(X)
@@ -110,16 +113,16 @@ model {
 
 d <- list(y = hdata1$HO18_LifeExpect,
           X = Xmat[,-1],
-          B0 = rep(0,p),
-          Sig0 = XtX[-1,-1],
+          B0 = bhat[-1],
+          Sig0 = XtXdn[-1,-1],
           nu0 =1,
           sig20=sig2hat
 )
 
 
-inits <- list(list(tausq=1, alpha = 1, beta=rnorm(p) ),
-              list(tausq=1, alpha=-1, beta=rnorm(p,sd=3) ),
-              list(tausq=1, alpha=0, beta=rnorm(p,sd=.5) )
+inits <- list(list(tausq=1, alpha = 1, beta=c(0,0)),
+              list(tausq=1, alpha=-1, beta=c(1,1)),
+              list(tausq=1, alpha=0, beta=c(-1,-1))
 )
 
 m <- jags.model(final.proj.model1, d, inits, n.chains=3, n.adapt=0)
